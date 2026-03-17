@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Robot Dituria Assistant</title>
+  <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
+  <style>
+    :root{
+      --bg1:#07111d;
+      --bg2:#163554;
+      --card:rgba(255,255,255,.08);
+      --border:rgba(255,255,255,.14);
+      --text:#ecf6ff;
+      --muted:#b8cfe6;
+      --primary:#66bbff;
+      --danger:#ff8d8d;
+      --shadow:0 16px 42px rgba(0,0,0,.28);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Segoe UI,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(102,187,255,.18), transparent 24%),
+        radial-gradient(circle at bottom left, rgba(131,243,214,.10), transparent 24%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .wrap{
+      width:min(950px,100%);
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(10px);
+      padding:26px;
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size:clamp(30px,4vw,46px);
+    }
+
+    .sub{
+      margin:0;
+      color:var(--muted);
+      line-height:1.6;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns:320px 1fr;
+      gap:24px;
+      align-items:center;
+      margin-bottom:18px;
+    }
+
+    .robot-area{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:310px;
+    }
+
+    .robot{
+      position:relative;
+      width:270px;
+      height:290px;
+      animation:floaty 3s ease-in-out infinite;
+    }
+
+    .glow{
+      position:absolute;
+      left:50%;
+      top:44%;
+      width:210px;
+      height:210px;
+      transform:translate(-50%,-50%);
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(102,187,255,.34), transparent 65%);
+      filter:blur(4px);
+      animation:pulse 2.3s ease-in-out infinite;
+    }
+
+    .head{
+      position:absolute;
+      left:50%;
+      top:34px;
+      transform:translateX(-50%);
+      width:165px;
+      height:126px;
+      border-radius:34px;
+      background:linear-gradient(180deg,#e8f7ff,#9ed9ff);
+      border:6px solid #eef9ff;
+      box-shadow:0 10px 24px rgba(0,0,0,.22);
+    }
+
+    .antenna{
+      position:absolute;
+      left:50%;
+      top:-30px;
+      transform:translateX(-50%);
+      width:8px;
+      height:28px;
+      background:#d5efff;
+      border-radius:8px;
+    }
+
+    .antenna::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:-12px;
+      transform:translateX(-50%);
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:#89f4d8;
+      box-shadow:0 0 18px rgba(137,244,216,.95);
+    }
+
+    .eye{
+      position:absolute;
+      top:40px;
+      width:26px;
+      height:26px;
+      border-radius:50%;
+      background:#164a73;
+      box-shadow:0 0 16px rgba(102,187,255,.45) inset, 0 0 10px rgba(102,187,255,.36);
+    }
+
+    .eye.left{left:34px}
+    .eye.right{right:34px}
+
+    .cheek{
+      position:absolute;
+      top:72px;
+      width:16px;
+      height:8px;
+      border-radius:20px;
+      background:rgba(255,131,173,.45);
+    }
+
+    .cheek.left{left:20px}
+    .cheek.right{right:20px}
+
+    .mouth{
+      position:absolute;
+      left:50%;
+      bottom:24px;
+      transform:translateX(-50%);
+      width:64px;
+      height:30px;
+      border-bottom:6px solid #17496f;
+      border-radius:0 0 46px 46px;
+      background:transparent;
+      transition:all .12s ease;
+    }
+
+    .body{
+      position:absolute;
+      left:50%;
+      top:172px;
+      transform:translateX(-50%);
+      width:126px;
+      height:92px;
+      border-radius:30px;
+      background:linear-gradient(180deg,#d4f0ff,#89d0ff);
+      border:6px solid #eef9ff;
+    }
+
+    .arm{
+      position:absolute;
+      top:186px;
+      width:58px;
+      height:14px;
+      border-radius:16px;
+      background:#d7f2ff;
+      transform-origin:center;
+    }
+
+    .arm.left{
+      left:28px;
+      transform:rotate(24deg);
+      animation:waveL 2.8s ease-in-out infinite;
+    }
+
+    .arm.right{
+      right:28px;
+      transform:rotate(-24deg);
+      animation:waveR 2.8s ease-in-out infinite;
+    }
+
+    .leg{
+      position:absolute;
+      top:258px;
+      width:16px;
+      height:32px;
+      border-radius:16px;
+      background:#d7f2ff;
+    }
+
+    .leg.left{left:108px}
+    .leg.right{right:108px}
+
+    .robot.listening .eye,
+    .robot.speaking .eye{
+      animation:blinkGlow .7s infinite alternate;
+    }
+
+    .robot.speaking .mouth{
+      width:34px;
+      height:30px;
+      border-radius:18px;
+      border-bottom:none;
+      background:#17496f;
+    }
+
+    .buttons{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin:18px 0 8px;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius:16px;
+      padding:14px 18px;
+      font-size:16px;
+      font-weight:800;
+    }
+
+    .btn.ask{
+      background:linear-gradient(135deg,var(--primary),#afdfff);
+      color:#06203e;
+    }
+
+    .btn.stop{
+      background:linear-gradient(135deg,var(--danger),#ffd0d0);
+      color:#521717;
+    }
+
+    label{
+      display:block;
+      margin:0 0 7px;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+    }
+
+    textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:18px;
+      padding:14px;
+      font-size:15px;
+      outline:none;
+      line-height:1.55;
+      resize:vertical;
+    }
+
+    #heardText{min-height:130px}
+    #answerText{min-height:220px}
+
+    .grid{
+      display:grid;
+      gap:16px;
+      grid-template-columns:1fr;
+    }
+
+    .status{
+      margin-top:16px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    .ok{color:#8df0a5}
+    .warn{color:#ffd58e}
+
+    @keyframes floaty{
+      0%,100%{transform:translateY(0)}
+      50%{transform:translateY(-8px)}
+    }
+
+    @keyframes pulse{
+      0%,100%{transform:translate(-50%,-50%) scale(.95);opacity:.55}
+      50%{transform:translate(-50%,-50%) scale(1.08);opacity:1}
+    }
+
+    @keyframes blinkGlow{
+      from{transform:scale(1);opacity:1}
+      to{transform:scale(1.12);opacity:.72}
+    }
+
+    @keyframes waveL{
+      0%,100%{transform:rotate(24deg)}
+      50%{transform:rotate(40deg)}
+    }
+
+    @keyframes waveR{
+      0%,100%{transform:rotate(-24deg)}
+      50%{transform:rotate(-40deg)}
+    }
+
+    @media (max-width: 960px){
+      .hero{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card">
+      <div class="hero">
+        <div class="robot-area">
+          <div id="robot" class="robot idle">
+            <div class="glow"></div>
+            <div class="head">
+              <div class="antenna"></div>
+              <div class="eye left"></div>
+              <div class="eye right"></div>
+              <div class="cheek left"></div>
+              <div class="cheek right"></div>
+              <div class="mouth"></div>
+            </div>
+            <div class="body"></div>
+            <div class="arm left"></div>
+            <div class="arm right"></div>
+            <div class="leg left"></div>
+            <div class="leg right"></div>
+          </div>
+        </div>
+        <div>
+          <h1>Robot Dituria</h1>
+          <p class="sub">Version vetëm me HTML. Roboti dëgjon pyetjen dhe jep përgjigje direkte sipas skriptit. Ka vetëm dy butona: për pyetjen dhe për ndalimin e përgjigjes.</p>
+          <div class="buttons">
+            <button id="askBtn" class="btn ask">🎤 Jep pyetjen</button>
+            <button id="stopBtn" class="btn stop">⏹ Ndal përgjigjen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label for="heardText">Pyetja e dëgjuar</label>
+          <textarea id="heardText" placeholder="Këtu shfaqet pyetja e dëgjuar..."></textarea>
+        </div>
+        <div>
+          <label for="answerText">Përgjigjja direkte sipas skriptit</label>
+          <textarea id="answerText" readonly placeholder="Këtu shfaqet përgjigjja sipas skriptit..."></textarea>
+        </div>
+      </div>
+
+      <div id="statusBox" class="status">Gati. Vendos Azure key te SETTINGS dhe kliko “Jep pyetjen”.</div>
+    </section>
+  </div>
+
+  <script>
+    const SETTINGS = {
+      azureKey: "1Bhicnrm3iftFMjPwPNkuIL8VyvXNkjP1JFdSqTXUiDB6aJgkesXJQQJ99CCAC5RqLJXJ3w3AAAYACOGfr23",
+      azureRegion: "westeurope",
+      recognitionLanguage: "sq-AL",
+      synthesisLanguage: "sq-AL",
+      voice: "sq-AL-IlirNeural",
+      rate: "1%",
+      pitch: "-15%"
+    };
+
+    const SCRIPT_DATA = {
+      welcome_message: "Te nderuar mesues,nxenes,te ftuar.",
+      default_response: "Me falni, per kete pyetje nuk kam pergjigje ne skript.",
+      items: [
+        {
+          triggers: ["pershendetje"],
+          response: "Te nderuar mesues,nxenes,te ftuar.\nPershendesim jurine.....\nUne jam Drindon.\nRrugetimi ne keto dite te Festivalit Kombetar te Shkencave 2026 eshte nje emocion i vecante.Nxenesit po shfaqin talent ne fushat STEM.Gjate ketyre 2 muajve nxenesit kane punuar projekte ne fusha te ndryshme.Urojme qe dhe ky konkurim i sotshem,qe nxenesit,keto shkenctare te ardhshem te paraqiten sa me mire!"
+        },
+        {
+          triggers: ["kush eshte stafi i shkolles dituria"],
+          response: "Stafi i shkolles Dituria eshte nje staf me shume eksperience ne fushen e arsimit,me shkollimin e duhur dhe trjanimet perkatese.Nderkohe gjate viteve ne formim jemi krenar per shume mesuesve qe kane dhe kontribut ne hapat e pare te shkolles Dituria si;Orjeta Isufi,Sonila Tafili,Verjana Ymeri,Ilda Bushi,Entila Kadija,Klaudia Hysa,Albana Selhanaj,Elisa Salihi,Gentiana Dekaj,Rrezarta Mlika,Lorata Jaku,Blerta Baku,Denisa Shimaj,Enkeleida Basha,Enkeledia Rexhepi,Rrovis Rroku,Liljana Vuksani,Britni Gera,Ermenisa Tallalli,Nertila Haxhagaj,Miranda Qeseri."
+        },
+        {
+          triggers: ["kur u themelua shkolla dituria"],
+          response: "Shkolla Dituria eshte themeluar me aktin e licensimit urdher.numer 254 date 13.9.2001.Ky vit qe jemi 2026 eshte viti i 25 vjetorit te Shkolles Dituria.Themeluesit e Shkolles Jopublike jane Teuta Zaja me nje eksperience te pasur ne fushen e arsimit dhe ingjinier kimist Ilir Zaja,te cilet kane ditur te drejtonte keto 25 vite me perkushtim vizion."
+        },
+        {
+          triggers: ["me prezanto shkollen dituria"],
+          response: "Shkolla Dituria ofron nje mjedis modern dhe te pershtatshem per zhvillimin e nxenesve. Ajo ka hapsira te domosdoshme per mesim dhe aktivitete praktike, te pajisura me teknologji bashkekohore. Te gjitha klasat jane te pajisura me smartboard, te cilat e bejne procesin e mesimit me interaktiv dhe me te kuptueshem. Shkolla gjithashtu ka laboratoret e informatikes fizikes, biologjis,kimis te pershtatshme per nje mesimdhenie bashkohore. Ne shkolle eshte edhe dhoma Red Frame 360, nje projekt i fituar nga nxenesit e shkolles sone, e cila perdoret per seanca ndergjegjesimi dhe  reflektimi."
+        }
+      ]
+    };
+
+    const askBtn = document.getElementById("askBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const heardText = document.getElementById("heardText");
+    const answerText = document.getElementById("answerText");
+    const statusBox = document.getElementById("statusBox");
+    const robot = document.getElementById("robot");
+
+    let recognizer = null;
+    let synthesizer = null;
+    let currentAudio = null;
+    let currentAudioUrl = null;
+    let isStopped = false;
+    let isBusy = false;
+
+    function setStatus(msg, cls = ""){
+      statusBox.className = "status " + cls;
+      statusBox.textContent = msg;
+    }
+
+    function robotState(state){
+      robot.classList.remove("idle", "listening", "speaking");
+      robot.classList.add(state);
+    }
+
+    function setBusy(busy){
+      isBusy = busy;
+      askBtn.disabled = busy;
+      askBtn.style.opacity = busy ? "0.7" : "1";
+    }
+
+    function normalizeText(text){
+      return (text || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9çë\s]/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function getReply(input){
+      const normInput = normalizeText(input);
+
+      for (const item of (SCRIPT_DATA.items || [])) {
+        for (const trigger of (item.triggers || [])) {
+          const t = normalizeText(trigger);
+          if (normInput === t || normInput.includes(t)) {
+            return item.response;
+          }
+        }
+      }
+
+      return SCRIPT_DATA.default_response;
+    }
+
+    function escapeXml(text){
+      return String(text || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&apos;");
+    }
+
+    function getSpeechConfig(){
+      if(!SETTINGS.azureKey || SETTINGS.azureKey === "VENDOS_KEY_TEND_KETU" || !SETTINGS.azureRegion){
+        throw new Error("Vendos Azure key te SETTINGS ne kod.");
+      }
+
+      const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
+        SETTINGS.azureKey,
+        SETTINGS.azureRegion
+      );
+
+      speechConfig.speechRecognitionLanguage = SETTINGS.recognitionLanguage || "sq-AL";
+      speechConfig.speechSynthesisLanguage = SETTINGS.synthesisLanguage || "sq-AL";
+      speechConfig.speechSynthesisVoiceName = SETTINGS.voice || "sq-AL-IlirNeural";
+
+      return speechConfig;
+    }
+
+    function buildSsml(text){
+      return `<speak version="1.0" xml:lang="sq-AL"><voice name="${SETTINGS.voice}"><prosody rate="${SETTINGS.rate}" pitch="${SETTINGS.pitch}">${escapeXml(text)}</prosody></voice></speak>`;
+    }
+
+    function cleanupAudio(){
+      try {
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.onended = null;
+          currentAudio.onerror = null;
+          currentAudio.src = "";
+          currentAudio = null;
+        }
+      } catch (e) {}
+
+      try {
+        if (currentAudioUrl) {
+          URL.revokeObjectURL(currentAudioUrl);
+          currentAudioUrl = null;
+        }
+      } catch (e) {}
+    }
+
+    function stopAll(){
+      isStopped = true;
+      setBusy(false);
+
+      try {
+        if (recognizer) {
+          recognizer.close();
+          recognizer = null;
+        }
+      } catch (e) {}
+
+      try {
+        if (synthesizer) {
+          synthesizer.close();
+          synthesizer = null;
+        }
+      } catch (e) {}
+
+      cleanupAudio();
+
+      robotState("idle");
+      setStatus("Pergjigjja u ndal.", "warn");
+    }
+
+    function speakReply(text){
+      isStopped = false;
+
+      const speechConfig = getSpeechConfig();
+
+      try {
+        if (synthesizer) {
+          synthesizer.close();
+          synthesizer = null;
+        }
+      } catch (e) {}
+
+      cleanupAudio();
+
+      synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig);
+
+      robotState("speaking");
+      setStatus("Roboti po pergjigjet...", "ok");
+
+      synthesizer.speakSsmlAsync(
+        buildSsml(text),
+        function(result){
+          try {
+            if (synthesizer) {
+              synthesizer.close();
+              synthesizer = null;
+            }
+          } catch(e) {}
+
+          if (isStopped) {
+            robotState("idle");
+            setBusy(false);
+            return;
+          }
+
+          if (result.reason !== SpeechSDK.ResultReason.SynthesizingAudioCompleted || !result.audioData) {
+            robotState("idle");
+            setStatus("Gabim gjate leximit me Azure.");
+            setBusy(false);
+            return;
+          }
+
+          try {
+            const blob = new Blob([result.audioData], { type: "audio/wav" });
+            currentAudioUrl = URL.createObjectURL(blob);
+            currentAudio = new Audio(currentAudioUrl);
+
+            currentAudio.onended = function(){
+              cleanupAudio();
+              robotState("idle");
+              setStatus("Pergjigjja perfundoi.");
+              setBusy(false);
+            };
+
+            currentAudio.onerror = function(){
+              cleanupAudio();
+              robotState("idle");
+              setStatus("Gabim gjate luajtjes se audios.");
+              setBusy(false);
+            };
+
+            currentAudio.play().catch(function(err){
+              cleanupAudio();
+              robotState("idle");
+              setStatus("Gabim ne play audio: " + err);
+              setBusy(false);
+            });
+
+          } catch (err) {
+            robotState("idle");
+            setStatus("Gabim ne perpunimin e audios: " + err);
+            setBusy(false);
+          }
+        },
+        function(err){
+          try {
+            if (synthesizer) {
+              synthesizer.close();
+              synthesizer = null;
+            }
+          } catch(e) {}
+
+          if (isStopped) {
+            robotState("idle");
+            setBusy(false);
+            return;
+          }
+
+          robotState("idle");
+          setStatus("Gabim ne Azure TTS: " + err);
+          setBusy(false);
+        }
+      );
+    }
+
+    function askQuestion(){
+      try{
+        stopAll();
+        isStopped = false;
+        setBusy(true);
+
+        const speechConfig = getSpeechConfig();
+        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+        recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+
+        robotState("listening");
+        setStatus("Roboti po degjon pyetjen...", "ok");
+
+        recognizer.recognizeOnceAsync(
+          function(result){
+            robotState("idle");
+
+            let reply = SCRIPT_DATA.default_response;
+
+            if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+              const text = result.text || "";
+              heardText.value = text;
+              reply = getReply(text);
+            } else {
+              heardText.value = "";
+            }
+
+            answerText.value = reply;
+
+            try {
+              if (recognizer) {
+                recognizer.close();
+                recognizer = null;
+              }
+            } catch(e) {}
+
+            if (!isStopped) {
+              speakReply(reply);
+            } else {
+              setBusy(false);
+            }
+          },
+          function(err){
+            robotState("idle");
+            setStatus("Gabim ne Azure STT: " + err);
+
+            try {
+              if (recognizer) {
+                recognizer.close();
+                recognizer = null;
+              }
+            } catch(e) {}
+
+            setBusy(false);
+          }
+        );
+      } catch(e){
+        robotState("idle");
+        setStatus(e.message || String(e));
+        setBusy(false);
+      }
+    }
+
+    askBtn.addEventListener("click", askQuestion);
+    stopBtn.addEventListener("click", stopAll);
+
+    answerText.value = SCRIPT_DATA.welcome_message || "";
+    setStatus("Gati. Vendos Azure key te SETTINGS dhe kliko 'Jep pyetjen'.");
+  </script>
+</body>
+</html>
